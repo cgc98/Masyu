@@ -119,6 +119,44 @@ def solve_empty_tile(board, tile):
             tile.left_status = 1
         tile.solved = True
 
+def not_ian(board, tile, dir):
+    #Must be straight
+    if tile.color == 'W':
+        return True
+    elif tile.get_number_n() == 2:
+        if tile.up_status == -1:
+            if tile.down_status == -1:
+                return True
+            else:
+                return False
+        elif tile.left_status == -1:
+            if tile.right_status == -1:
+                return True
+            else:
+                return False
+    elif dir == "Up":
+        if tile.up_status == 1:
+            return True
+        else:
+            return False
+    elif dir == "Right":
+        if tile.right_status == 1:
+            return True
+        else:
+            return False
+    elif dir == "Down":
+        if tile.down_status == 1:
+            return True
+        else:
+            return False
+    elif dir == "Left":
+        if tile.left_status == 1:
+            return True
+        else: 
+            return False
+    else:
+        return False
+
 
 def solve_white_tile(board, tile):
     if (tile.get_number_y() + tile.get_number_n() > 0) and (tile.solved == False):
@@ -159,6 +197,23 @@ def solve_white_tile(board, tile):
                 board.board[tile.x + 1][tile.y].down_status = -1
             elif down_tile.down_status == 1:
                 board.board[tile.x - 1][tile.y].up_status = -1
+    else:
+        up_tile = board.board[tile.x - 1][tile.y]
+        down_tile = board.board[tile.x + 1][tile.y]
+        right_tile = board.board[tile.x][tile.y + 1]
+        left_tile = board.board[tile.x][tile.y - 1]
+        if (not_ian(board, up_tile, "Up") == True) and (not_ian(board, down_tile, "Down") == True):
+            tile.up_status = -1
+            tile.right_status = 1
+            tile.down_status = -1
+            tile.left_status = 1
+            tile.solved = True
+        elif (not_ian(board, right_tile, "Right") == True) and (not_ian(board, left_tile, "Left") == True):
+            tile.up_status = 1
+            tile.right_status = -1
+            tile.down_status = 1
+            tile.left_status = -1
+            tile.solved = True
 
 def distribute_data(board, tile):
     #Make the status of surrounding tiles match any updates
@@ -223,92 +278,97 @@ def solve_black_tile(board, tile):
     if tile.get_number_y == 2:
         tile.solved = True
 
-def get_endpoint(board, tile, dir):
+def get_endpoint(board, tile, dir, count):
     #Recursive function that continues down line until it reaches other endpoint
     if dir == "Up":
         if board.board[tile.x - 1][tile.y].get_number_y() == 1:
-            return board.board[tile.x - 1][tile.y]
+            return (board.board[tile.x - 1][tile.y], count)
         else:
             if board.board[tile.x - 1][tile.y].up_status == 1:
-                return get_endpoint(board, board.board[tile.x - 1][tile.y], "Up")
+                return get_endpoint(board, board.board[tile.x - 1][tile.y], "Up", count + 1)
             elif board.board[tile.x - 1][tile.y].right_status == 1:
-                return get_endpoint(board, board.board[tile.x - 1][tile.y], "Right")
+                return get_endpoint(board, board.board[tile.x - 1][tile.y], "Right", count + 1)
             elif board.board[tile.x - 1][tile.y].left_status == 1:
-                return get_endpoint(board, board.board[tile.x - 1][tile.y], "Left")
+                return get_endpoint(board, board.board[tile.x - 1][tile.y], "Left", count + 1)
     elif dir == "Right":
         if board.board[tile.x][tile.y + 1].get_number_y() == 1:
-            return board.board[tile.x][tile.y + 1]
+            return (board.board[tile.x][tile.y + 1], count)
         else:
             if board.board[tile.x][tile.y + 1].up_status == 1:
-                return get_endpoint(board, board.board[tile.x][tile.y + 1], "Up")
+                return get_endpoint(board, board.board[tile.x][tile.y + 1], "Up", count + 1)
             elif board.board[tile.x][tile.y + 1].down_status == 1:
-                return get_endpoint(board, board.board[tile.x][tile.y + 1], "Down")
+                return get_endpoint(board, board.board[tile.x][tile.y + 1], "Down", count + 1)
             elif board.board[tile.x][tile.y + 1].right_status == 1:
-                return get_endpoint(board, board.board[tile.x][tile.y + 1], "Right")
+                return get_endpoint(board, board.board[tile.x][tile.y + 1], "Right", count + 1)
     elif dir == "Down":
         if board.board[tile.x + 1][tile.y].get_number_y() == 1:
-            return board.board[tile.x + 1][tile.y]
+            return (board.board[tile.x + 1][tile.y], count)
         else:
             if board.board[tile.x + 1][tile.y].down_status == 1:
-                return get_endpoint(board, board.board[tile.x + 1][tile.y], "Down")
+                return get_endpoint(board, board.board[tile.x + 1][tile.y], "Down", count + 1)
             elif board.board[tile.x + 1][tile.y].right_status == 1:
-                return get_endpoint(board, board.board[tile.x + 1][tile.y], "Right")
+                return get_endpoint(board, board.board[tile.x + 1][tile.y], "Right", count + 1)
             elif board.board[tile.x + 1][tile.y].left_status == 1:
-                return get_endpoint(board, board.board[tile.x + 1][tile.y], "Left")
+                return get_endpoint(board, board.board[tile.x + 1][tile.y], "Left", count + 1)
     elif dir == "Left":
         if board.board[tile.x][tile.y - 1].get_number_y() == 1:
-            return board.board[tile.x][tile.y - 1]
+            return (board.board[tile.x][tile.y - 1], count)
         else:
             if board.board[tile.x][tile.y - 1].up_status == 1:
-                return get_endpoint(board, board.board[tile.x][tile.y - 1], "Up")
+                return get_endpoint(board, board.board[tile.x][tile.y - 1], "Up", count + 1)
             elif board.board[tile.x][tile.y - 1].down_status == 1:
-                return get_endpoint(board, board.board[tile.x][tile.y - 1], "Down")
+                return get_endpoint(board, board.board[tile.x][tile.y - 1], "Down", count + 1)
             elif board.board[tile.x][tile.y - 1].left_status == 1:
-                return get_endpoint(board, board.board[tile.x][tile.y - 1], "Left")
+                return get_endpoint(board, board.board[tile.x][tile.y - 1], "Left", count + 1)
 
 def solve_tile(board, tile):
     #Endpoint tracking
     if (tile.solved == False) and (tile.get_number_y() == 1):
+        total = len(board.board) * len(board.board[0])
         if tile.up_status == 1:
-            end = get_endpoint(board, tile, "Up")
-            if end.x == tile.x:
-                if end.y - tile.y == 1:
-                    tile.right_status = -1
-                elif tile.y - end.y == 1:
-                    tile.left_status = -1
-            elif end.y == tile.y:
-                if end.x - tile.x == 1:
-                    tile.down_status = -1
+            (end, count) = get_endpoint(board, tile, "Up", 0)
+            if count < (total * 0.75):
+                if end.x == tile.x:
+                    if end.y - tile.y == 1:
+                        tile.right_status = -1
+                    elif tile.y - end.y == 1:
+                        tile.left_status = -1
+                elif end.y == tile.y:
+                    if end.x - tile.x == 1:
+                        tile.down_status = -1
         elif tile.right_status == 1:
-            end = get_endpoint(board, tile, "Right")
-            if end.y == tile.y:
-                if end.x - tile.x == 1:
-                    tile.down_status = -1
-                elif tile.x - end.x == 1:
-                    tile.up_status = -1
-            elif end.x == tile.x:
-                if tile.y - end.y == 1:
-                    tile.left_status = -1
+            (end, count) = get_endpoint(board, tile, "Right", 0)
+            if count < (total * 0.75):
+                if end.y == tile.y:
+                    if end.x - tile.x == 1:
+                        tile.down_status = -1
+                    elif tile.x - end.x == 1:
+                        tile.up_status = -1
+                elif end.x == tile.x:
+                    if tile.y - end.y == 1:
+                        tile.left_status = -1
         elif tile.down_status == 1:
-            end = get_endpoint(board, tile, "Down")
-            if end.x == tile.x:
-                if end.y - tile.y == 1:
-                    tile.right_status = -1
-                elif tile.y - end.y == 1:
-                    tile.left_status = -1
-            elif end.y == tile.y:
-                if tile.x - end.x == 1:
-                    tile.up_status = -1
+            (end, count) = get_endpoint(board, tile, "Down", 0)
+            if count < (total * 0.75):
+                if end.x == tile.x:
+                    if end.y - tile.y == 1:
+                        tile.right_status = -1
+                    elif tile.y - end.y == 1:
+                        tile.left_status = -1
+                elif end.y == tile.y:
+                    if tile.x - end.x == 1:
+                        tile.up_status = -1
         else:
-            end = get_endpoint(board, tile, "Left")
-            if end.y == tile.y:
-                if end.x - tile.x == 1:
-                    tile.down_status = -1
-                elif tile.x - end.x == 1:
-                    tile.up_status = -1
-            elif end.x == tile.x:
-                if end.y - tile.y == 1:
-                    tile.right_status = -1
+            (end, count) = get_endpoint(board, tile, "Left", 0)
+            if count < (total * 0.75):
+                if end.y == tile.y:
+                    if end.x - tile.x == 1:
+                        tile.down_status = -1
+                    elif tile.x - end.x == 1:
+                        tile.up_status = -1
+                elif end.x == tile.x:
+                    if end.y - tile.y == 1:
+                        tile.right_status = -1
     #Solve by color
     if tile.color == 'E':
         if tile.solved == False:
@@ -327,21 +387,21 @@ def solve(board):
             solve_tile(board, board.board[i][j])
         
 
-colors = [['E','W','E','E','E','E','W','E','E','E',],\
-['E','E','E','W','E','E','E','E','E','W',],\
-['B','W','E','W','E','W','E','W','W','E',],\
-['W','E','B','W','E','B','E','E','W','E',],\
-['E','E','E','E','E','E','E','E','E','E',],\
-['E','E','B','E','E','E','W','B','E','W',],\
-['W','E','E','W','E','E','E','W','E','E',],\
-['E','E','E','W','W','E','E','E','E','E',],\
-['E','E','E','W','W','E','W','W','E','E',],\
-['B','W','E','E','E','E','E','E','E','B',]]
+colors = \
+[['E','E','E','E','E','W','E','E','E','E',],\
+['E','E','W','W','E','E','E','E','W','W',],\
+['E','E','B','B','E','E','B','W','B','E',],\
+['E','E','W','E','E','E','W','E','E','E',],\
+['W','W','W','E','E','B','W','E','E','E',],\
+['E','E','E','E','W','W','E','W','E','W',],\
+['E','E','E','W','E','E','E','E','W','E',],\
+['E','W','E','W','E','E','E','E','W','E',],\
+['E','W','E','E','E','W','E','E','B','W',],\
+['E','E','W','W','E','E','W','E','W','E',]]
 
 board = Board(colors)
 for i in range(30):
     solve(board)
-board.board[1][9].print()
 board.print()
 
 
