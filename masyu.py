@@ -37,40 +37,32 @@ class Tile:
         print(self.down_status)
         print(self.left_status)
         print(self.solved)
+    def get_all_open(self):
+        lst = []
+        if self.up_status == 0:
+            lst.append("Up")
+        if self.right_status == 0:
+            lst.append("Right")
+        if self.down_status == 0:
+            lst.append("Down")
+        if self.left_status == 0:
+            lst.append("Left")
+        return lst
     def get_first_open(self):
-        if self.up_status == 0:
-            return "Up"
-        elif self.right_status == 0:
-            return "Right"
-        elif self.down_status == 0:
-            return "Down"
-        elif self.left_status == 0:
-            return "Left"
-        return "None"
+        return self.get_all_open()[0]
     def get_second_open(self):
-        if self.up_status == 0:
-            if self.right_status == 0:
-                return "Right"
-            elif self.down_status == 0:
-                return "Down"
-            elif self.left_status == 0:
-                return "Left"
-            else:
-                return "None"
-        elif self.right_status == 0:
-            if self.down_status == 0:
-                return "Down"
-            elif self.left_status == 0:
-                return "Left"
-            else:
-                return "None"
-        elif self.down_status == 0:
-            if self.left_status == 0:
-                return "Left"
-            else:
-                return "None"
+        return self.get_all_open()[1]
+    def get_third_open(self):
+        return self.get_all_open()[2]
+    def set_to_yes(self, dir):
+        if dir == "Up":
+            self.up_status = 1
+        elif dir == "Right":
+            self.right_status = 1
+        elif dir == "Down":
+            self.down_status = 1
         else:
-            return "None"
+            self.left_status = 1
 
 def opposite(dir):
     if dir == "Up":
@@ -88,7 +80,6 @@ def convert_status_to_char(status):
     elif status == -1:
         return "n"
     return "y"
-
 
 class Board:
     def __init__(self, colors):
@@ -304,6 +295,56 @@ def solve_empty_tile(board, tile):
                     tile.down_status = -1
                     tile.left_status = -1
                     tile.solved = True
+    elif (tile.get_number_n() == 1) and (tile.get_number_y() == 0):
+        dir_one = tile.get_first_open()
+        dir_two = tile.get_second_open()
+        dir_three = tile.get_third_open()
+        path_one_end = get_path_end(board, tile, dir_one, tile.x, tile.y)
+        path_two_end = get_path_end(board, tile, dir_two, tile.x, tile.y)
+        path_three_end = get_path_end(board, tile, dir_three, tile.x, tile.y)
+        if path_one_end.get_number_y() == 1:
+            if path_one_end.up_status == 1:
+                (path_one_end_end, a) = get_endpoint(board, path_one_end, "Up", 0)
+                if path_one_end_end.x == path_two_end.x and path_one_end_end.y == path_two_end.y:
+                    tile.set_to_yes(dir_three)
+                elif path_one_end_end.x == path_three_end.x and path_one_end_end.y == path_three_end.y:
+                    tile.set_to_yes(dir_two)
+            if path_one_end.right_status == 1:
+                (path_one_end_end, a) = get_endpoint(board, path_one_end, "Right", 0)
+                if path_one_end_end.x == path_two_end.x and path_one_end_end.y == path_two_end.y:
+                    tile.set_to_yes(dir_three)
+                elif path_one_end_end.x == path_three_end.x and path_one_end_end.y == path_three_end.y:
+                    tile.set_to_yes(dir_two)
+            if path_one_end.down_status == 1:
+                (path_one_end_end, a) = get_endpoint(board, path_one_end, "Down", 0)
+                if path_one_end_end.x == path_two_end.x and path_one_end_end.y == path_two_end.y:
+                    tile.set_to_yes(dir_three)
+                elif path_one_end_end.x == path_three_end.x and path_one_end_end.y == path_three_end.y:
+                    tile.set_to_yes(dir_two)
+            if path_one_end.left_status == 1:
+                (path_one_end_end, a) = get_endpoint(board, path_one_end, "Left", 0)
+                if path_one_end_end.x == path_two_end.x and path_one_end_end.y == path_two_end.y:
+                    tile.set_to_yes(dir_three)
+                elif path_one_end_end.x == path_three_end.x and path_one_end_end.y == path_three_end.y:
+                    tile.set_to_yes(dir_two)
+        if path_two_end.get_number_y() == 1:
+            if path_two_end.up_status == 1:
+                (path_two_end_end, a) = get_endpoint(board, path_two_end, "Up", 0)
+                if path_two_end_end.x == path_three_end.x and path_two_end_end.y == path_three_end.y:
+                    tile.set_to_yes(dir_one)
+            if path_two_end.right_status == 1:
+                (path_two_end_end, a) = get_endpoint(board, path_two_end, "Right", 0)
+                if path_two_end_end.x == path_three_end.x and path_two_end_end.y == path_three_end.y:
+                    tile.set_to_yes(dir_one)
+            if path_two_end.down_status == 1:
+                (path_two_end_end, a) = get_endpoint(board, path_two_end, "Down", 0)
+                if path_two_end_end.x == path_three_end.x and path_two_end_end.y == path_three_end.y:
+                    tile.set_to_yes(dir_one)
+            if path_two_end.left_status == 1:
+                (path_two_end_end, a) = get_endpoint(board, path_two_end, "Left", 0)
+                if path_two_end_end.x == path_three_end.x and path_two_end_end.y == path_three_end.y:
+                    tile.set_to_yes(dir_one)
+            
 
 def not_ian(board, tile, dir):
     #Must be straight
