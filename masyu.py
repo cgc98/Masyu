@@ -169,6 +169,9 @@ def get_endpoint(board, tile, dir, count):
 
 
 def get_path_end(board, tile, dir, start_x, start_y):
+    #For a hallway tile (two statuses set to no, can either be a fixed path or nothing)
+    #Checks in the direction dir and if the tile in direction dir is an endpoint or an open
+    #end then it returns that tile otherwise it keeps iterating down the hallway
     if dir == "Up":
         if tile.x - 1 == start_x and tile.y == start_y:
             return board.board[tile.x - 1][tile.y]
@@ -260,6 +263,11 @@ def solve_empty_tile(board, tile):
         elif tile.left_status == 0:
             tile.left_status = 1
         tile.solved = True
+    #If it is a hallway (two statuses are no, so must either be empty or have a fixed path)
+    #then it uses get_path_end to extend along the hallway until nothing or an end is reached
+    #If two endpoints are reached then get_endpoint is run and if the endpoints match
+    #then all statuses are set to false because that means filling the hallway creates
+    #a loop
     elif (tile.get_number_n() == 2) and (tile.get_number_y() == 0):
         tile_one = get_path_end(board, tile, tile.get_first_open(), tile.x, tile.y)
         tile_two = get_path_end(board, tile, tile.get_second_open(), tile.x, tile.y)
@@ -375,6 +383,9 @@ def solve_white_tile(board, tile):
                 board.board[tile.x + 1][tile.y].down_status = -1
             elif down_tile.down_status == 1:
                 board.board[tile.x - 1][tile.y].up_status = -1
+    #Checks if tile on both sides must be straight, and if so, sets to other orientation
+    #For example, if the top and bottom tiles must be straight, it cant go up and down because
+    #it has to turn, so it sets it to left to right
     else:
         up_tile = board.board[tile.x - 1][tile.y]
         down_tile = board.board[tile.x + 1][tile.y]
