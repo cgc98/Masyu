@@ -1,3 +1,83 @@
+import tkinter as tk
+
+def _create_circle(self, x, y, r, **kwargs):
+    return self.create_oval(x-r, y-r, x+r, y+r, **kwargs)
+tk.Canvas.create_circle = _create_circle
+
+def create_grid(event=None):
+    w = c.winfo_width() # Get current width of canvas
+    h = c.winfo_height() # Get current height of canvas
+    c.delete('grid_line') # Will only remove the grid_line
+
+    # Creates 40 vertical lines 
+    for i in range(0, w, int(w/dim)):
+        c.create_line([(i, 0), (i, h)], tag='grid_line')
+
+    # Creates 40 horizontal lines 
+    for i in range(0, h, int(h/dim)):
+        c.create_line([(0, i), (w, i)], tag='grid_line')
+
+def draw_units(event=None):
+    w = c.winfo_width() # Get current width of canvas
+    h = c.winfo_height() # Get current height of canvas
+
+    c.delete('unit') # Will only remove the grid_line
+
+    for i in range(len(colors)):
+        for j in range(len(colors[0])):
+            if(colors[j][i]=="W"):
+                c.create_rectangle(i*int(w/dim), j*int(h/dim), (1+i)*int(w/dim), (1+j)*int(h/dim), fill="white", outline = 'black', tag='unit') 
+            elif(colors[j][i]=="B"):
+                c.create_rectangle(i*int(w/dim), j*int(h/dim), (1+i)*int(w/dim), (1+j)*int(h/dim), fill="black", outline = 'white', tag='unit') 
+            else:
+                c.create_rectangle(i*int(w/dim), j*int(h/dim), (1+i)*int(w/dim), (1+j)*int(h/dim), fill="gray", outline = 'mint cream', tag='unit') 
+    c.delete('circ') # Will only remove the grid_line
+
+    for i in range(len(board.board)):
+        for j in range(len(board.board[0])):
+            if board.board[j][i].up_status == 1:
+                c.create_circle((.5+i)*int(w/dim), j*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
+            elif board.board[j][i].up_status == -1:
+                c.create_circle((.5+i)*int(w/dim), j*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
+            if board.board[j][i].right_status == 1:
+                c.create_circle((1+i)*int(w/dim), (.5+j)*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
+            elif board.board[j][i].right_status == -1:
+                c.create_circle((1+i)*int(w/dim), (.5+j)*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
+            if board.board[j][i].down_status == 1:
+                c.create_circle((.5+i)*int(w/dim), (1+j)*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
+            elif board.board[j][i].down_status == -1:
+                c.create_circle((.5+i)*int(w/dim), (1+j)*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
+            if board.board[j][i].left_status == 1:
+                c.create_circle(i*int(w/dim), (.5+j)*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
+            elif board.board[j][i].left_status == -1:
+                c.create_circle(i*int(w/dim), (.5+j)*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
+
+def draw_circles(event=None):
+    w = c.winfo_width() # Get current width of canvas
+    h = c.winfo_height() # Get current height of canvas
+
+    c.delete('circ') # Will only remove the grid_line
+
+    for i in range(len(board.board)):
+        for j in range(len(board.board[0])):
+            if board.board[j][i].up_status == 1:
+                c.create_circle((.5+i)*int(w/dim), j*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
+            elif board.board[j][i].up_status == -1:
+                c.create_circle((.5+i)*int(w/dim), j*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
+            if board.board[j][i].right_status == 1:
+                c.create_circle((1+i)*int(w/dim), (.5+j)*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
+            elif board.board[j][i].right_status == -1:
+                c.create_circle((1+i)*int(w/dim), (.5+j)*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
+            if board.board[j][i].down_status == 1:
+                c.create_circle((.5+i)*int(w/dim), (1+j)*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
+            elif board.board[j][i].down_status == -1:
+                c.create_circle((.5+i)*int(w/dim), (1+j)*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
+            if board.board[j][i].left_status == 1:
+                c.create_circle(i*int(w/dim), (.5+j)*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
+            elif board.board[j][i].left_status == -1:
+                c.create_circle(i*int(w/dim), (.5+j)*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
+
+
 class Tile:
     def __init__(self, x_coord, y_coord, tile_color):
         self.x = x_coord
@@ -601,5 +681,18 @@ board = Board(colors)
 for i in range(100):
     solve(board)
 board.print()
+
+dim = 20
+
+root = tk.Tk()
+
+c = tk.Canvas(root, height=1000, width=1000, bg='white')
+c.pack(fill=tk.BOTH, expand=True)
+
+c.bind('<Configure>', create_grid)
+c.bind('<Configure>', draw_units)
+
+root.mainloop()
+
 
 
