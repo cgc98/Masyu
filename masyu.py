@@ -37,10 +37,12 @@ def draw_units(event=None):
         for j in range(len(board.board[0])):
             if board.board[j][i].up_status == 1:
                 c.create_circle((.5+i)*int(w/dim), j*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
+                c.create_line([((.5+i)*int(w/dim), (j-.5)*int(h/dim)), ((.5+i)*int(w/dim), (j+.5)*int(h/dim))], fill="green")
             elif board.board[j][i].up_status == -1:
                 c.create_circle((.5+i)*int(w/dim), j*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
             if board.board[j][i].right_status == 1:
                 c.create_circle((1+i)*int(w/dim), (.5+j)*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
+                c.create_line([((.5+i)*int(w/dim), (j+.5)*int(h/dim)), ((1.5+i)*int(w/dim), (j+.5)*int(h/dim))], fill="green")
             elif board.board[j][i].right_status == -1:
                 c.create_circle((1+i)*int(w/dim), (.5+j)*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
             if board.board[j][i].down_status == 1:
