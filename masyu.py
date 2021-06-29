@@ -164,6 +164,7 @@ def convert_status_to_char(status):
 class Board:
     def __init__(self, colors):
         self.board = [[0 for x in range(len(colors[0]))] for y in range(len(colors))]
+        self.colors = colors
         for i in range(len(colors)):
             for j in range(len(colors[i])):
                 self.board[i][j] = Tile(i, j, colors[i][j])
@@ -194,6 +195,16 @@ class Board:
             string += convert_status_to_char(self.board[(len(self.board))-1][j].right_status) + " "
         string += self.board[(len(self.board))-1][(len(self.board[(len(self.board))-1]))-1].color
         print(string)
+    def copy(self):
+        new_board = Board(self.colors)
+        for i in range(len(new_board.board)):
+            for j in range(len(new_board.board[0])):
+                new_board.board[i][j].up_status = self.board[i][j].up_status
+                new_board.board[i][j].down_status = self.board[i][j].down_status
+                new_board.board[i][j].left_status = self.board[i][j].left_status
+                new_board.board[i][j].right_status = self.board[i][j].right_status
+                new_board.board[i][j].solved = self.board[i][j].solved
+        return new_board
 
 def get_endpoint(board, tile, dir, count):
     #Recursive function that continues down line until it reaches other endpoint
@@ -375,55 +386,55 @@ def solve_empty_tile(board, tile):
                     tile.down_status = -1
                     tile.left_status = -1
                     tile.solved = True
-    elif (tile.get_number_n() == 1) and (tile.get_number_y() == 0):
-        dir_one = tile.get_first_open()
-        dir_two = tile.get_second_open()
-        dir_three = tile.get_third_open()
-        path_one_end = get_path_end(board, tile, dir_one, tile.x, tile.y)
-        path_two_end = get_path_end(board, tile, dir_two, tile.x, tile.y)
-        path_three_end = get_path_end(board, tile, dir_three, tile.x, tile.y)
-        if path_one_end.get_number_y() == 1:
-            if path_one_end.up_status == 1:
-                (path_one_end_end, a) = get_endpoint(board, path_one_end, "Up", 0)
-                if path_one_end_end.x == path_two_end.x and path_one_end_end.y == path_two_end.y:
-                    tile.set_to_yes(dir_three)
-                elif path_one_end_end.x == path_three_end.x and path_one_end_end.y == path_three_end.y:
-                    tile.set_to_yes(dir_two)
-            if path_one_end.right_status == 1:
-                (path_one_end_end, a) = get_endpoint(board, path_one_end, "Right", 0)
-                if path_one_end_end.x == path_two_end.x and path_one_end_end.y == path_two_end.y:
-                    tile.set_to_yes(dir_three)
-                elif path_one_end_end.x == path_three_end.x and path_one_end_end.y == path_three_end.y:
-                    tile.set_to_yes(dir_two)
-            if path_one_end.down_status == 1:
-                (path_one_end_end, a) = get_endpoint(board, path_one_end, "Down", 0)
-                if path_one_end_end.x == path_two_end.x and path_one_end_end.y == path_two_end.y:
-                    tile.set_to_yes(dir_three)
-                elif path_one_end_end.x == path_three_end.x and path_one_end_end.y == path_three_end.y:
-                    tile.set_to_yes(dir_two)
-            if path_one_end.left_status == 1:
-                (path_one_end_end, a) = get_endpoint(board, path_one_end, "Left", 0)
-                if path_one_end_end.x == path_two_end.x and path_one_end_end.y == path_two_end.y:
-                    tile.set_to_yes(dir_three)
-                elif path_one_end_end.x == path_three_end.x and path_one_end_end.y == path_three_end.y:
-                    tile.set_to_yes(dir_two)
-        if path_two_end.get_number_y() == 1:
-            if path_two_end.up_status == 1:
-                (path_two_end_end, a) = get_endpoint(board, path_two_end, "Up", 0)
-                if path_two_end_end.x == path_three_end.x and path_two_end_end.y == path_three_end.y:
-                    tile.set_to_yes(dir_one)
-            if path_two_end.right_status == 1:
-                (path_two_end_end, a) = get_endpoint(board, path_two_end, "Right", 0)
-                if path_two_end_end.x == path_three_end.x and path_two_end_end.y == path_three_end.y:
-                    tile.set_to_yes(dir_one)
-            if path_two_end.down_status == 1:
-                (path_two_end_end, a) = get_endpoint(board, path_two_end, "Down", 0)
-                if path_two_end_end.x == path_three_end.x and path_two_end_end.y == path_three_end.y:
-                    tile.set_to_yes(dir_one)
-            if path_two_end.left_status == 1:
-                (path_two_end_end, a) = get_endpoint(board, path_two_end, "Left", 0)
-                if path_two_end_end.x == path_three_end.x and path_two_end_end.y == path_three_end.y:
-                    tile.set_to_yes(dir_one)
+    # elif (tile.get_number_n() == 1) and (tile.get_number_y() == 0):
+    #     dir_one = tile.get_first_open()
+    #     dir_two = tile.get_second_open()
+    #     dir_three = tile.get_third_open()
+    #     path_one_end = get_path_end(board, tile, dir_one, tile.x, tile.y)
+    #     path_two_end = get_path_end(board, tile, dir_two, tile.x, tile.y)
+    #     path_three_end = get_path_end(board, tile, dir_three, tile.x, tile.y)
+    #     if path_one_end.get_number_y() == 1:
+    #         if path_one_end.up_status == 1:
+    #             (path_one_end_end, a) = get_endpoint(board, path_one_end, "Up", 0)
+    #             if path_one_end_end.x == path_two_end.x and path_one_end_end.y == path_two_end.y:
+    #                 tile.set_to_yes(dir_three)
+    #             elif path_one_end_end.x == path_three_end.x and path_one_end_end.y == path_three_end.y:
+    #                 tile.set_to_yes(dir_two)
+    #         if path_one_end.right_status == 1:
+    #             (path_one_end_end, a) = get_endpoint(board, path_one_end, "Right", 0)
+    #             if path_one_end_end.x == path_two_end.x and path_one_end_end.y == path_two_end.y:
+    #                 tile.set_to_yes(dir_three)
+    #             elif path_one_end_end.x == path_three_end.x and path_one_end_end.y == path_three_end.y:
+    #                 tile.set_to_yes(dir_two)
+    #         if path_one_end.down_status == 1:
+    #             (path_one_end_end, a) = get_endpoint(board, path_one_end, "Down", 0)
+    #             if path_one_end_end.x == path_two_end.x and path_one_end_end.y == path_two_end.y:
+    #                 tile.set_to_yes(dir_three)
+    #             elif path_one_end_end.x == path_three_end.x and path_one_end_end.y == path_three_end.y:
+    #                 tile.set_to_yes(dir_two)
+    #         if path_one_end.left_status == 1:
+    #             (path_one_end_end, a) = get_endpoint(board, path_one_end, "Left", 0)
+    #             if path_one_end_end.x == path_two_end.x and path_one_end_end.y == path_two_end.y:
+    #                 tile.set_to_yes(dir_three)
+    #             elif path_one_end_end.x == path_three_end.x and path_one_end_end.y == path_three_end.y:
+    #                 tile.set_to_yes(dir_two)
+    #     if path_two_end.get_number_y() == 1:
+    #         if path_two_end.up_status == 1:
+    #             (path_two_end_end, a) = get_endpoint(board, path_two_end, "Up", 0)
+    #             if path_two_end_end.x == path_three_end.x and path_two_end_end.y == path_three_end.y:
+    #                 tile.set_to_yes(dir_one)
+    #         if path_two_end.right_status == 1:
+    #             (path_two_end_end, a) = get_endpoint(board, path_two_end, "Right", 0)
+    #             if path_two_end_end.x == path_three_end.x and path_two_end_end.y == path_three_end.y:
+    #                 tile.set_to_yes(dir_one)
+    #         if path_two_end.down_status == 1:
+    #             (path_two_end_end, a) = get_endpoint(board, path_two_end, "Down", 0)
+    #             if path_two_end_end.x == path_three_end.x and path_two_end_end.y == path_three_end.y:
+    #                 tile.set_to_yes(dir_one)
+    #         if path_two_end.left_status == 1:
+    #             (path_two_end_end, a) = get_endpoint(board, path_two_end, "Left", 0)
+    #             if path_two_end_end.x == path_three_end.x and path_two_end_end.y == path_three_end.y:
+    #                 tile.set_to_yes(dir_one)
             
 
 def not_ian(board, tile, dir):
@@ -464,8 +475,15 @@ def not_ian(board, tile, dir):
     else:
         return False
 
+def is_broken(board):
+    for i in range(len(board.board)):
+        for j in range(len(board.board[0])):
+            if board.board[i][j].get_number_y() == 1 and board.board[i][j].get_number_n() == 3:
+                return True
+    return False
 
-def solve_white_tile(board, tile):
+
+def solve_white_tile(board, tile, debug):
     if (tile.get_number_y() + tile.get_number_n() > 0) and (tile.solved == False):
         #One status tells all status, so checks for any nonzero statuses
         if tile.up_status != 0:
@@ -524,6 +542,39 @@ def solve_white_tile(board, tile):
             tile.down_status = 1
             tile.left_status = -1
             tile.solved = True
+        # if tile.solved == False and debug == False:
+        #     new_board = board.copy()
+        #     new_board.board[tile.x][tile.y].up_status = 1
+        #     new_board.board[tile.x][tile.y].down_status = 1
+        #     new_board.board[tile.x][tile.y].left_status = -1
+        #     new_board.board[tile.x][tile.y].right_status = -1
+        #     new_board.board[tile.x][tile.y].solved = True
+        #     distribute_data(new_board, new_board.board[tile.x][tile.y])
+        #     for i in range(10):
+        #         solve(new_board, True)
+        #     if is_broken(new_board) == True:
+        #         tile.up_status = -1
+        #         tile.down_status = -1
+        #         tile.left_status = 1
+        #         tile.right_status = 1
+        #         tile.solved = True
+        #     else:
+        #         new_board_two = board.copy()
+        #         new_board_two.board[tile.x][tile.y].up_status = -1
+        #         new_board_two.board[tile.x][tile.y].down_status = -1
+        #         new_board_two.board[tile.x][tile.y].left_status = 1
+        #         new_board_two.board[tile.x][tile.y].right_status = 1
+        #         new_board_two.board[tile.x][tile.y].solved = True
+        #         distribute_data(new_board_two, new_board_two.board[tile.x][tile.y])
+        #         for i in range(10):
+        #             solve(new_board_two, True)
+        #         if is_broken(new_board_two) == True:
+        #             tile.up_status = 1
+        #             tile.down_status = 1
+        #             tile.left_status = -1
+        #             tile.right_status = -1
+        #             tile.solved = True
+
 
 def distribute_data(board, tile):
     #Make the status of surrounding tiles match any updates
@@ -588,7 +639,7 @@ def solve_black_tile(board, tile):
     if tile.get_number_y == 2:
         tile.solved = True
 
-def solve_tile(board, tile):
+def solve_tile(board, tile, debug):
     #Endpoint tracking
     if (tile.solved == False) and (tile.get_number_y() == 1):
         total = len(board.board) * len(board.board[0])
@@ -641,17 +692,17 @@ def solve_tile(board, tile):
         if tile.solved == False:
             solve_empty_tile(board, tile)
     elif tile.color == 'W':
-        solve_white_tile(board, tile)
+        solve_white_tile(board, tile, debug)
     else:
         if tile.solved == False:
             solve_black_tile(board, tile)
     distribute_data(board, tile)
 
-def solve(board):
+def solve(board, debug):
     #Solve all tiles
     for i in range(len(board.board)):
         for j in range(len(board.board[i])):
-            solve_tile(board, board.board[i][j])
+            solve_tile(board, board.board[i][j], debug)
         
 
 colors = \
@@ -679,7 +730,7 @@ colors = \
 
 board = Board(colors)
 for i in range(100):
-    solve(board)
+    solve(board, False)
 board.print()
 
 dim = 20
