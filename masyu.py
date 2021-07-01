@@ -36,21 +36,21 @@ def draw_units(event=None):
     for i in range(len(board.board)):
         for j in range(len(board.board[0])):
             if board.board[j][i].up_status == 1:
-                c.create_circle((.5+i)*int(w/dim), j*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
-                c.create_line([((.5+i)*int(w/dim), (j-.5)*int(h/dim)), ((.5+i)*int(w/dim), (j+.5)*int(h/dim))], fill="green")
+                c.create_circle((.5+i)*int(w/dim), j*int(h/dim), 5, fill="dark green", outline="white", width=1, tag='circ')
+                c.create_line([((.5+i)*int(w/dim), (j-.5)*int(h/dim)), ((.5+i)*int(w/dim), (j+.5)*int(h/dim))], fill="dark green")
             elif board.board[j][i].up_status == -1:
                 c.create_circle((.5+i)*int(w/dim), j*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
             if board.board[j][i].right_status == 1:
-                c.create_circle((1+i)*int(w/dim), (.5+j)*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
-                c.create_line([((.5+i)*int(w/dim), (j+.5)*int(h/dim)), ((1.5+i)*int(w/dim), (j+.5)*int(h/dim))], fill="green")
+                c.create_circle((1+i)*int(w/dim), (.5+j)*int(h/dim), 5, fill="dark green", outline="white", width=1, tag='circ')
+                c.create_line([((.5+i)*int(w/dim), (j+.5)*int(h/dim)), ((1.5+i)*int(w/dim), (j+.5)*int(h/dim))], fill="dark green")
             elif board.board[j][i].right_status == -1:
                 c.create_circle((1+i)*int(w/dim), (.5+j)*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
             if board.board[j][i].down_status == 1:
-                c.create_circle((.5+i)*int(w/dim), (1+j)*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
+                c.create_circle((.5+i)*int(w/dim), (1+j)*int(h/dim), 5, fill="dark green", outline="white", width=1, tag='circ')
             elif board.board[j][i].down_status == -1:
                 c.create_circle((.5+i)*int(w/dim), (1+j)*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
             if board.board[j][i].left_status == 1:
-                c.create_circle(i*int(w/dim), (.5+j)*int(h/dim), 5, fill="green", outline="white", width=1, tag='circ')
+                c.create_circle(i*int(w/dim), (.5+j)*int(h/dim), 5, fill="dark green", outline="white", width=1, tag='circ')
             elif board.board[j][i].left_status == -1:
                 c.create_circle(i*int(w/dim), (.5+j)*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
 
@@ -155,6 +155,19 @@ class Tile:
             self.down_status = -1
         else:
             self.left_status = -1
+    def get_all_yes(self):
+        lst = []
+        if self.up_status == 1:
+            lst.append("Up")
+        if self.right_status == 1:
+            lst.append("Right")
+        if self.down_status == 1:
+            lst.append("Down")
+        if self.left_status == 1:
+            lst.append("Left")
+        return lst
+    def get_first_yes(self):
+        return self.get_all_yes()[0]
 
 def opposite(dir):
     if dir == "Up":
@@ -319,11 +332,70 @@ def get_path_end(board, tile, dir, start_x, start_y):
             else:
                 return get_path_end(board, board.board[tile.x][tile.y - 1], new_dir, start_x, start_y)
 
+def is_dead_end(board, tile, acc, end, debug):
+    dirs = tile.get_all_open()
+    for dir in dirs:
+        if dir == "Up":
+            if board.board[tile.x - 1][tile.y] in acc:
+                pass
+            elif tile.x - 1 == end.x and tile.y == end.y:
+                pass
+            elif board.board[tile.x - 1][tile.y].get_number_y() == 1:
+                return False
+            else:
+                acc.append(tile)
+                if not is_dead_end(board, board.board[tile.x - 1][tile.y], acc, end):
+                    return False
+        elif dir == "Right":
+            if board.board[tile.x][tile.y + 1] in acc:
+                pass
+            elif tile.x == end.x and tile.y + 1 == end.y:
+                pass
+            elif board.board[tile.x][tile.y + 1].get_number_y() == 1:
+                return False
+            else:
+                acc.append(tile)
+                if not is_dead_end(board, board.board[tile.x][tile.y + 1], acc, end, debug):
+                    return False
+        elif dir == "Down":
+            if board.board[tile.x + 1][tile.y] in acc:
+                pass
+            elif tile.x + 1 == end.x and tile.y == end.y:
+                pass
+            elif board.board[tile.x + 1][tile.y].get_number_y() == 1:
+                return False
+            else:
+                acc.append(tile)
+                if not is_dead_end(board, board.board[tile.x + 1][tile.y], acc, end, debug):
+                    return False
+        else:
+            if board.board[tile.x][tile.y - 1] in acc:
+                board.print()
+                pass
+            elif tile.x == end.x and tile.y - 1 == end.y:
+                board.print()
+                pass
+            elif board.board[tile.x][tile.y - 1].get_number_y() == 1:
+                return False
+            else:
+                acc.append(tile)
+                if not is_dead_end(board, board.board[tile.x][tile.y - 1], acc, end, debug):
+                    return False
+    board.print()
+    print(" ")
+    return True
+
+
 def is_broken(board):
     for i in range(len(board.board)):
         for j in range(len(board.board[0])):
             if (board.board[i][j].get_number_y() == 1 and board.board[i][j].get_number_n() == 3) or (board.board[i][j].get_number_y() == 3 and board.board[i][j].get_number_n() == 1):
                 return True
+            if board.board[i][j].get_number_y() == 1 and board.board[i][j].get_number_n() < 3:
+                (end, a) = get_endpoint(board, board.board[i][j], board.board[i][j].get_first_yes(), 0)
+                debug = i == 0 and j == 8
+                if is_dead_end(board, board.board[i][j], [], end, debug):
+                    return True
             if board.board[i][j].color == 'W':
                 if board.board[i][j].up_status == 1:
                     if board.board[i-1][j].up_status == 1 and board.board[i+1][j].down_status == 1:
