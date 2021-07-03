@@ -90,7 +90,12 @@ class Tile:
         self.down_status = 0
         self.left_status = 0
         self.solved = False
-        self.cooldown = 0
+        self.cooldown = 10
+        self.new_cooldown = 10
+        if tile_color == 'E':
+            self.can_empty = True
+        else:
+            self.can_empty = False
     def get_number_n(self): #
         count = 0
         if self.up_status == -1:
@@ -131,6 +136,17 @@ class Tile:
         if self.left_status == 0:
             lst.append("Left")
         return lst
+    def get_all_yes(self):
+        lst = []
+        if self.up_status == 1:
+            lst.append("Up")
+        if self.right_status == 1:
+            lst.append("Right")
+        if self.down_status == 1:
+            lst.append("Down")
+        if self.left_status == 1:
+            lst.append("Left")
+        return lst 
     def get_first_open(self):
         return self.get_all_open()[0]
     def get_second_open(self):
@@ -344,7 +360,7 @@ def is_dead_end(board, tile, acc, end, debug):
                 return False
             else:
                 acc.append(tile)
-                if not is_dead_end(board, board.board[tile.x - 1][tile.y], acc, end):
+                if not is_dead_end(board, board.board[tile.x - 1][tile.y], acc, end, debug):
                     return False
         elif dir == "Right":
             if board.board[tile.x][tile.y + 1] in acc:
@@ -370,10 +386,8 @@ def is_dead_end(board, tile, acc, end, debug):
                     return False
         else:
             if board.board[tile.x][tile.y - 1] in acc:
-                board.print()
                 pass
             elif tile.x == end.x and tile.y - 1 == end.y:
-                board.print()
                 pass
             elif board.board[tile.x][tile.y - 1].get_number_y() == 1:
                 return False
@@ -381,8 +395,6 @@ def is_dead_end(board, tile, acc, end, debug):
                 acc.append(tile)
                 if not is_dead_end(board, board.board[tile.x][tile.y - 1], acc, end, debug):
                     return False
-    board.print()
-    print(" ")
     return True
 
 
@@ -391,10 +403,17 @@ def is_broken(board):
         for j in range(len(board.board[0])):
             if (board.board[i][j].get_number_y() == 1 and board.board[i][j].get_number_n() == 3) or (board.board[i][j].get_number_y() == 3 and board.board[i][j].get_number_n() == 1):
                 return True
+            if board.board[i][j].can_empty == False and board.board[i][j].get_number_n() == 4:
+                return True
             if board.board[i][j].get_number_y() == 1 and board.board[i][j].get_number_n() < 3:
                 (end, a) = get_endpoint(board, board.board[i][j], board.board[i][j].get_first_yes(), 0)
                 debug = i == 0 and j == 8
                 if is_dead_end(board, board.board[i][j], [], end, debug):
+                    return True
+            if board.board[i][j].get_number_y() == 2:
+                try:
+                    (end, a) = get_endpoint(board, board.board[i][j], board.board[i][j].get_first_yes(), 0)
+                except:
                     return True
             if board.board[i][j].color == 'W':
                 if board.board[i][j].up_status == 1:
@@ -443,12 +462,29 @@ def solve_empty_tile(board, tile, debug):
         elif tile.left_status == 0:
             tile.left_status = 1
         tile.solved = True
+    elif tile.get_number_y() == 0 and tile.new_cooldown == 0 and debug == False:
+        dirs = tile.get_all_open()
+        new_board = board.copy()
+        for i in dirs:
+            new_board.board[tile.x][tile.y].set_to_no(i)
+        new_board.board[tile.x][tile.y].solved = True
+        distribute_data(new_board, new_board.board[tile.x][tile.y])
+        try:
+            for i in range(10):
+                solve(new_board, True)
+            if is_broken(new_board) == True:
+                tile.can_empty = False
+        except:
+            tile.can_empty = False
+        tile.new_cooldown = 10
+    elif tile.get_number_y() == 0 and debug == False:
+        tile.new_cooldown = tile.new_cooldown - 1
     #If it is a hallway (two statuses are no, so must either be empty or have a fixed path)
     #then it uses get_path_end to extend along the hallway until nothing or an end is reached
     #If two endpoints are reached then get_endpoint is run and if the endpoints match
     #then all statuses are set to false because that means filling the hallway creates
     #a loop
-    elif (tile.get_number_n() == 2) and (tile.get_number_y() == 0):
+    if (tile.get_number_n() == 2) and (tile.get_number_y() == 0):
         # tile_one = get_path_end(board, tile, tile.get_first_open(), tile.x, tile.y)
         # tile_two = get_path_end(board, tile, tile.get_second_open(), tile.x, tile.y)
         # if tile_one.get_number_y() == 1:
@@ -484,7 +520,12 @@ def solve_empty_tile(board, tile, debug):
         #             tile.down_status = -1
         #             tile.left_status = -1
         #             tile.solved = True
-        if (tile.solved == False and debug == False) and (tile.cooldown == 0):
+        if tile.can_empty == False:
+            dirs = tile.get_all_open()
+            for i in dirs:
+                tile.set_to_yes(i)
+            tile.solved = True
+        elif (tile.solved == False and debug == False) and (tile.cooldown == 0):
             new_board = board.copy()
             new_board.board[tile.x][tile.y].set_to_yes(tile.get_first_open())
             new_board.board[tile.x][tile.y].set_to_yes(tile.get_second_open())
@@ -559,6 +600,99 @@ def solve_empty_tile(board, tile, debug):
             tile.cooldown = 10
         elif debug == False:
             tile.cooldown = tile.cooldown - 1
+    elif tile.get_number_y() == 0 and tile.get_number_n() == 1 and tile.can_empty == False:
+        if debug == False and tile.cooldown == 0:
+            new_board = board.copy()
+            new_board.board[tile.x][tile.y].set_to_yes(tile.get_first_open())
+            new_board.board[tile.x][tile.y].set_to_yes(tile.get_second_open())
+            new_board.board[tile.x][tile.y].set_to_no(tile.get_third_open())
+            new_board.board[tile.x][tile.y].solved = True
+            distribute_data(new_board, new_board.board[tile.x][tile.y])
+            try:
+                for i in range(10):
+                    solve(new_board, True)
+                if is_broken(new_board) == True:
+                    tile.set_to_yes(tile.get_third_open())
+                else:
+                    new_board_two = board.copy()
+                    new_board_two.board[tile.x][tile.y].set_to_yes(tile.get_first_open())
+                    new_board_two.board[tile.x][tile.y].set_to_no(tile.get_second_open())
+                    new_board_two.board[tile.x][tile.y].set_to_yes(tile.get_third_open())
+                    new_board_two.board[tile.x][tile.y].solved = True
+                    distribute_data(new_board_two, new_board_two.board[tile.x][tile.y])
+                    try:
+                        for i in range(10):
+                            solve(new_board_two, True)
+                        if is_broken(new_board_two) == True:
+                            tile.set_to_yes(tile.get_second_open())
+                        else:
+                            new_board_three = board.copy()
+                            new_board_three.board[tile.x][tile.y].set_to_no(tile.get_first_open())
+                            new_board_three.board[tile.x][tile.y].set_to_yes(tile.get_second_open())
+                            new_board_three.board[tile.x][tile.y].set_to_yes(tile.get_third_open())
+                            new_board_three.board[tile.x][tile.y].solved = True
+                            distribute_data(new_board_three, new_board_three.board[tile.x][tile.y])
+                            try:
+                                for i in range(10):
+                                    solve(new_board_three, True)
+                                if is_broken(new_board_three) == True:
+                                    tile.set_to_yes(tile.get_first_open())
+                            except:
+                                tile.set_to_yes(tile.get_first_open())
+                    except:
+                        tile.set_to_yes(tile.get_second_open())
+            except:
+                tile.set_to_yes(tile.get_third_open())
+            tile.cooldown = 10
+        elif debug == False:
+            tile.cooldown = tile.cooldown - 1 
+    elif tile.get_number_y() == 1 and tile.get_number_n() == 0:
+        if debug == False and tile.cooldown == 0:
+            new_board = board.copy()
+            new_board.board[tile.x][tile.y].set_to_yes(tile.get_first_open())
+            new_board.board[tile.x][tile.y].set_to_no(tile.get_second_open())
+            new_board.board[tile.x][tile.y].set_to_no(tile.get_third_open())
+            new_board.board[tile.x][tile.y].solved = True
+            distribute_data(new_board, new_board.board[tile.x][tile.y])
+            try:
+                for i in range(10):
+                    solve(new_board, True)
+                if is_broken(new_board) == True:
+                    tile.set_to_no(tile.get_first_open())
+                else:
+                    new_board_two = board.copy()
+                    new_board_two.board[tile.x][tile.y].set_to_no(tile.get_first_open())
+                    new_board_two.board[tile.x][tile.y].set_to_yes(tile.get_second_open())
+                    new_board_two.board[tile.x][tile.y].set_to_no(tile.get_third_open())
+                    new_board_two.board[tile.x][tile.y].solved = True
+                    distribute_data(new_board_two, new_board_two.board[tile.x][tile.y])
+                    try:
+                        for i in range(10):
+                            solve(new_board_two, True)
+                        if is_broken(new_board_two) == True:
+                            tile.set_to_no(tile.get_second_open())
+                        else:
+                            new_board_three = board.copy()
+                            new_board_three.board[tile.x][tile.y].set_to_no(tile.get_first_open())
+                            new_board_three.board[tile.x][tile.y].set_to_no(tile.get_second_open())
+                            new_board_three.board[tile.x][tile.y].set_to_yes(tile.get_third_open())
+                            new_board_three.board[tile.x][tile.y].solved = True
+                            distribute_data(new_board_three, new_board_three.board[tile.x][tile.y])
+                            try:
+                                for i in range(10):
+                                    solve(new_board_three, True)
+                                if is_broken(new_board_three) == True:
+                                    tile.set_to_no(tile.get_third_open())
+                            except:
+                                tile.set_to_no(tile.get_third_open())
+                    except:
+                        tile.set_to_no(tile.get_second_open())
+            except:
+                tile.set_to_no(tile.get_first_open())
+            tile.cooldown = 10
+        elif debug == False:
+            tile.cooldown = tile.cooldown - 1 
+
     
 def not_ian(board, tile, dir):
     #Must be straight
@@ -773,7 +907,7 @@ def solve_black_tile(board, tile, debug):
         board.board[tile.x][tile.y + 1].right_status = 1
         distribute_data(board, board.board[tile.x][tile.y + 1])
     #If two branches exist, solve
-    if tile.get_number_y == 2:
+    if tile.get_number_y() == 2:
         tile.solved = True
     if tile.solved == False:
         if (tile.get_number_y() == 1 and debug == False) and tile.cooldown == 0:
@@ -929,44 +1063,50 @@ def solve_tile(board, tile, debug):
     elif tile.color == 'W':
         solve_white_tile(board, tile, debug)
     else:
-        if tile.solved == False:
-            solve_black_tile(board, tile, debug)
+        solve_black_tile(board, tile, debug)
     distribute_data(board, tile)
 
 def solve(board, debug):
     #Solve all tiles
     for i in range(len(board.board)):
         for j in range(len(board.board[i])):
+            if debug == False:
+                if board.board[i][j].solved == False:
+                    print(board.board[i][j].x, board.board[i][j].y)
             solve_tile(board, board.board[i][j], debug)
         
 
 colors = \
-[['E','B','E','E','E','E','E','W','E','E','E','E','E','E','E','E','W','E','E','E'],\
-['E','E','E','E','W','W','E','E','E','E','W','B','W','W','E','E','E','E','B','E'],\
-['E','E','W','E','E','W','E','E','W','W','E','E','E','E','E','W','W','E','E','E'],\
-['E','E','E','E','B','E','E','E','W','E','W','E','E','E','B','E','E','E','E','E'],\
-['E','E','E','B','E','E','W','E','E','E','E','E','E','E','E','W','E','E','E','E'],\
-['E','E','E','E','E','E','E','E','E','E','B','B','E','W','E','E','E','W','E','E'],\
-['E','E','E','E','B','E','W','E','E','W','W','E','E','E','E','W','B','W','E','W'],\
-['B','E','B','B','E','E','B','E','E','E','W','E','W','E','E','B','E','E','E','E'],\
-['E','E','E','E','E','W','E','E','E','E','E','E','E','E','E','E','E','E','E','E'],\
-['B','E','W','E','E','E','E','W','E','E','E','E','E','E','E','E','E','E','E','W'],\
-['E','E','E','W','E','W','B','E','E','B','E','B','E','B','E','E','B','E','E','E'],\
-['E','W','W','E','W','E','E','E','W','E','E','B','E','E','B','W','W','E','E','E'],\
-['E','E','E','E','E','E','E','E','E','W','E','E','E','E','B','E','W','E','E','E'],\
-['E','E','E','B','E','E','B','E','E','E','W','E','W','E','E','E','E','E','E','E'],\
-['W','W','E','E','E','W','E','E','E','E','E','B','E','E','E','E','E','E','E','E'],\
-['W','E','E','W','E','E','E','E','B','E','E','E','E','E','E','E','W','E','W','E'],\
-['B','E','E','E','E','E','W','E','E','B','E','E','W','W','B','W','E','E','E','E'],\
-['E','E','E','W','E','E','E','E','E','E','B','B','E','B','E','E','E','E','B','E'],\
-['E','E','E','E','E','E','E','E','E','E','E','E','E','E','E','E','E','E','E','E'],\
-['E','E','W','E','E','W','E','E','W','E','W','E','E','E','E','B','E','E','E','B'],\
+[['E','W','E','W','E','E','E','E','E','E','E','E','B','E','E','W','E','E','E','B'],\
+['E','E','E','E','E','E','E','E','E','E','E','E','E','E','E','E','E','W','E','E'],\
+['E','W','W','E','B','E','B','W','E','E','E','E','E','E','B','E','E','E','E','E'],\
+['B','E','E','E','E','E','W','E','W','B','E','B','E','E','E','E','E','E','B','E'],\
+['E','E','E','E','E','E','E','E','E','E','B','E','E','E','E','E','E','E','E','E'],\
+['E','E','E','B','E','B','E','W','E','E','E','W','E','W','W','B','E','E','B','W'],\
+['E','E','E','E','W','E','E','E','W','E','E','E','E','E','W','E','E','E','E','E'],\
+['W','B','E','W','E','E','E','E','E','W','E','E','E','B','E','E','W','W','E','E'],\
+['E','E','E','E','W','E','W','E','E','E','W','E','E','E','E','E','E','E','E','E'],\
+['E','W','E','W','E','E','E','B','E','B','E','W','E','E','W','W','E','E','W','E'],\
+['E','E','E','W','E','E','W','E','E','E','E','B','E','W','E','B','B','E','E','W'],\
+['E','E','W','E','E','E','E','W','E','E','E','E','E','E','E','E','E','E','E','E'],\
+['E','W','E','W','E','W','E','E','E','B','E','B','E','E','E','B','E','W','E','E'],\
+['E','E','W','E','E','E','W','E','E','E','E','E','E','E','E','E','E','E','W','E'],\
+['E','W','E','E','E','W','E','E','B','E','E','E','W','W','E','B','E','E','E','E'],\
+['E','W','E','E','E','E','W','E','E','B','E','E','E','W','E','E','E','E','B','W'],\
+['E','W','E','E','E','E','W','W','E','E','B','E','E','W','E','E','E','E','E','E'],\
+['E','E','E','B','E','E','E','E','B','E','E','E','E','E','E','E','E','E','E','E'],\
+['W','E','E','E','B','E','W','E','E','E','E','E','W','E','E','E','E','B','E','W'],\
+['E','W','E','E','E','W','E','E','E','E','E','W','W','E','E','E','E','E','E','E'],\
 ]
 
 board = Board(colors)
-for i in range(100):
+for i in range(70):
     solve(board, False)
 board.print()
+for i in board.board:
+    for j in i:
+        if j.solved == False:
+            print(j.x, j.y)
 
 dim = 20
 
