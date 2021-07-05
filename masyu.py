@@ -96,6 +96,7 @@ class Tile:
             self.can_empty = True
         else:
             self.can_empty = False
+        self.flooded = False
     def get_number_n(self): #
         count = 0
         if self.up_status == -1:
@@ -348,54 +349,81 @@ def get_path_end(board, tile, dir, start_x, start_y):
             else:
                 return get_path_end(board, board.board[tile.x][tile.y - 1], new_dir, start_x, start_y)
 
-def is_dead_end(board, tile, acc, end, debug):
+def simulate_flood(board, tile):
+    tile.flooded = True
     dirs = tile.get_all_open()
-    for dir in dirs:
-        if dir == "Up":
-            if board.board[tile.x - 1][tile.y] in acc:
-                pass
-            elif tile.x - 1 == end.x and tile.y == end.y:
-                pass
-            elif board.board[tile.x - 1][tile.y].get_number_y() == 1:
-                return False
-            else:
-                acc.append(tile)
-                if not is_dead_end(board, board.board[tile.x - 1][tile.y], acc, end, debug):
-                    return False
-        elif dir == "Right":
-            if board.board[tile.x][tile.y + 1] in acc:
-                pass
-            elif tile.x == end.x and tile.y + 1 == end.y:
-                pass
-            elif board.board[tile.x][tile.y + 1].get_number_y() == 1:
-                return False
-            else:
-                acc.append(tile)
-                if not is_dead_end(board, board.board[tile.x][tile.y + 1], acc, end, debug):
-                    return False
-        elif dir == "Down":
-            if board.board[tile.x + 1][tile.y] in acc:
-                pass
-            elif tile.x + 1 == end.x and tile.y == end.y:
-                pass
-            elif board.board[tile.x + 1][tile.y].get_number_y() == 1:
-                return False
-            else:
-                acc.append(tile)
-                if not is_dead_end(board, board.board[tile.x + 1][tile.y], acc, end, debug):
-                    return False
-        else:
-            if board.board[tile.x][tile.y - 1] in acc:
-                pass
-            elif tile.x == end.x and tile.y - 1 == end.y:
-                pass
-            elif board.board[tile.x][tile.y - 1].get_number_y() == 1:
-                return False
-            else:
-                acc.append(tile)
-                if not is_dead_end(board, board.board[tile.x][tile.y - 1], acc, end, debug):
-                    return False
-    return True
+    for i in dirs:
+        if i == "Up":
+            if board.board[tile.x-1][tile.y].flooded == False:
+                simulate_flood(board, board.board[tile.x - 1][tile.y])
+        elif i == "Down":
+            if board.board[tile.x+1][tile.y].flooded == False:
+                simulate_flood(board, board.board[tile.x + 1][tile.y])
+        elif i == "Right":
+            if board.board[tile.x][tile.y+1].flooded == False:
+                simulate_flood(board, board.board[tile.x][tile.y + 1])
+        elif i == "Left":
+            if board.board[tile.x][tile.y-1].flooded == False:
+                simulate_flood(board, board.board[tile.x][tile.y - 1])
+
+
+def is_dead_end(board, tile, end):
+    # dirs = tile.get_all_open()
+    # for dir in dirs:
+    #     if dir == "Up":
+    #         if board.board[tile.x - 1][tile.y] in acc:
+    #             pass
+    #         elif tile.x - 1 == end.x and tile.y == end.y:
+    #             pass
+    #         elif board.board[tile.x - 1][tile.y].get_number_y() == 1:
+    #             return False
+    #         else:
+    #             acc.append(tile)
+    #             if not is_dead_end(board, board.board[tile.x - 1][tile.y], acc, end):
+    #                 return False
+    #     elif dir == "Right":
+    #         if board.board[tile.x][tile.y + 1] in acc:
+    #             pass
+    #         elif tile.x == end.x and tile.y + 1 == end.y:
+    #             pass
+    #         elif board.board[tile.x][tile.y + 1].get_number_y() == 1:
+    #             return False
+    #         else:
+    #             acc.append(tile)
+    #             if not is_dead_end(board, board.board[tile.x][tile.y + 1], acc, end):
+    #                 return False
+    #     elif dir == "Down":
+    #         if board.board[tile.x + 1][tile.y] in acc:
+    #             pass
+    #         elif tile.x + 1 == end.x and tile.y == end.y:
+    #             pass
+    #         elif board.board[tile.x + 1][tile.y].get_number_y() == 1:
+    #             return False
+    #         else:
+    #             acc.append(tile)
+    #             if not is_dead_end(board, board.board[tile.x + 1][tile.y], acc, end):
+    #                 return False
+    #     else:
+    #         if board.board[tile.x][tile.y - 1] in acc:
+    #             pass
+    #         elif tile.x == end.x and tile.y - 1 == end.y:
+    #             pass
+    #         elif board.board[tile.x][tile.y - 1].get_number_y() == 1:
+    #             return False
+    #         else:
+    #             acc.append(tile)
+    #             if not is_dead_end(board, board.board[tile.x][tile.y - 1], acc, end):
+    #                 return False
+    # return True
+    simulate_flood(board, tile)
+    count = 0
+    for row in board.board:
+        for t in row:
+            if t.flooded == True and t.get_number_y() == 1:
+                count = count + 1
+    if count % 2 != 0:
+        return True
+    return False
 
 
 def is_broken(board):
@@ -407,8 +435,7 @@ def is_broken(board):
                 return True
             if board.board[i][j].get_number_y() == 1 and board.board[i][j].get_number_n() < 3:
                 (end, a) = get_endpoint(board, board.board[i][j], board.board[i][j].get_first_yes(), 0)
-                debug = i == 0 and j == 8
-                if is_dead_end(board, board.board[i][j], [], end, debug):
+                if is_dead_end(board, board.board[i][j], end):
                     return True
             if board.board[i][j].get_number_y() == 2:
                 try:
@@ -1014,7 +1041,7 @@ def solve_tile(board, tile, debug):
         total = len(board.board) * len(board.board[0])
         if tile.up_status == 1:
             (end, count) = get_endpoint(board, tile, "Up", 0)
-            if count < (total * 0.75):
+            if count < (total * 0.8):
                 if end.x == tile.x:
                     if end.y - tile.y == 1:
                         tile.right_status = -1
@@ -1025,7 +1052,7 @@ def solve_tile(board, tile, debug):
                         tile.down_status = -1
         elif tile.right_status == 1:
             (end, count) = get_endpoint(board, tile, "Right", 0)
-            if count < (total * 0.75):
+            if count < (total * 0.8):
                 if end.y == tile.y:
                     if end.x - tile.x == 1:
                         tile.down_status = -1
@@ -1036,7 +1063,7 @@ def solve_tile(board, tile, debug):
                         tile.left_status = -1
         elif tile.down_status == 1:
             (end, count) = get_endpoint(board, tile, "Down", 0)
-            if count < (total * 0.75):
+            if count < (total * 0.8):
                 if end.x == tile.x:
                     if end.y - tile.y == 1:
                         tile.right_status = -1
@@ -1047,7 +1074,7 @@ def solve_tile(board, tile, debug):
                         tile.up_status = -1
         else:
             (end, count) = get_endpoint(board, tile, "Left", 0)
-            if count < (total * 0.75):
+            if count < (total * 0.8):
                 if end.y == tile.y:
                     if end.x - tile.x == 1:
                         tile.down_status = -1
