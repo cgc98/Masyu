@@ -387,53 +387,6 @@ def contained_to_flood(board, tile):
 
 
 def is_dead_end(board, tile, end, count):
-    # dirs = tile.get_all_open()
-    # for dir in dirs:
-    #     if dir == "Up":
-    #         if board.board[tile.x - 1][tile.y] in acc:
-    #             pass
-    #         elif tile.x - 1 == end.x and tile.y == end.y:
-    #             pass
-    #         elif board.board[tile.x - 1][tile.y].get_number_y() == 1:
-    #             return False
-    #         else:
-    #             acc.append(tile)
-    #             if not is_dead_end(board, board.board[tile.x - 1][tile.y], acc, end):
-    #                 return False
-    #     elif dir == "Right":
-    #         if board.board[tile.x][tile.y + 1] in acc:
-    #             pass
-    #         elif tile.x == end.x and tile.y + 1 == end.y:
-    #             pass
-    #         elif board.board[tile.x][tile.y + 1].get_number_y() == 1:
-    #             return False
-    #         else:
-    #             acc.append(tile)
-    #             if not is_dead_end(board, board.board[tile.x][tile.y + 1], acc, end):
-    #                 return False
-    #     elif dir == "Down":
-    #         if board.board[tile.x + 1][tile.y] in acc:
-    #             pass
-    #         elif tile.x + 1 == end.x and tile.y == end.y:
-    #             pass
-    #         elif board.board[tile.x + 1][tile.y].get_number_y() == 1:
-    #             return False
-    #         else:
-    #             acc.append(tile)
-    #             if not is_dead_end(board, board.board[tile.x + 1][tile.y], acc, end):
-    #                 return False
-    #     else:
-    #         if board.board[tile.x][tile.y - 1] in acc:
-    #             pass
-    #         elif tile.x == end.x and tile.y - 1 == end.y:
-    #             pass
-    #         elif board.board[tile.x][tile.y - 1].get_number_y() == 1:
-    #             return False
-    #         else:
-    #             acc.append(tile)
-    #             if not is_dead_end(board, board.board[tile.x][tile.y - 1], acc, end):
-    #                 return False
-    # return True
     simulate_flood(board, tile, True)
     count = 0
     non_count = 0
