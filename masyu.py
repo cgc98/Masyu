@@ -487,6 +487,37 @@ def is_broken(board):
                         return True
     return False
 
+# def is_adjacent(tile, tile_two):
+#     if tile.x == tile_two.x:
+#         if tile.y - tile_two.y == 1:
+#             return "Right"
+#         elif tile_two.y - tile.y == 1:
+#             return "Left"
+#         else:
+#             return "No"
+#     elif tile.y == tile_two.y:
+#         if tile.x - tile_two.x == 1:
+#             return "Down"
+#         elif tile_two.x - tile.x == 1:
+#             return "Up"
+#         else:
+#             return "No"
+
+# def check_if_dirs_empty(board, tile, dirs):
+#     for i in dirs:
+#         if i == "Up":
+#             if board.board[tile.x - 1][tile.y].color != 'E':
+#                 return False
+#         if i == "Down":
+#             if board.board[tile.x + 1][tile.y].color != 'E':
+#                 return False
+#         if i == "Left":
+#             if board.board[tile.x][tile.y - 1].color != 'E':
+#                 return False
+#         if i == "Right":
+#             if board.board[tile.x][tile.y + 1].color != 'E':
+#                 return False
+#     return True
 
 def solve_empty_tile(board, tile, debug):
     #If already solved, set to solved
@@ -548,41 +579,6 @@ def solve_empty_tile(board, tile, debug):
     #then all statuses are set to false because that means filling the hallway creates
     #a loop
     if (tile.get_number_n() == 2) and (tile.get_number_y() == 0):
-        # tile_one = get_path_end(board, tile, tile.get_first_open(), tile.x, tile.y)
-        # tile_two = get_path_end(board, tile, tile.get_second_open(), tile.x, tile.y)
-        # if tile_one.get_number_y() == 1:
-        #     if tile_one.up_status == 1:
-        #         (tile_one_end, a) = get_endpoint(board, tile_one, "Up", 0)
-        #         if tile_one_end.x == tile_two.x and tile_one_end.y == tile_two.y:
-        #             tile.up_status = -1
-        #             tile.right_status = -1
-        #             tile.down_status = -1
-        #             tile.left_status = -1
-        #             tile.solved = True
-        #     elif tile_one.right_status == 1:
-        #         (tile_one_end, a) = get_endpoint(board, tile_one, "Right", 0)
-        #         if tile_one_end.x == tile_two.x and tile_one_end.y == tile_two.y:
-        #             tile.up_status = -1
-        #             tile.right_status = -1
-        #             tile.down_status = -1
-        #             tile.left_status = -1
-        #             tile.solved = True
-        #     elif tile_one.down_status == 1:
-        #         (tile_one_end, a) = get_endpoint(board, tile_one, "Down", 0)
-        #         if tile_one_end.x == tile_two.x and tile_one_end.y == tile_two.y:
-        #             tile.up_status = -1
-        #             tile.right_status = -1
-        #             tile.down_status = -1
-        #             tile.left_status = -1
-        #             tile.solved = True
-        #     else:
-        #         (tile_one_end, a) = get_endpoint(board, tile_one, "Left", 0)
-        #         if tile_one_end.x == tile_two.x and tile_one_end.y == tile_two.y:
-        #             tile.up_status = -1
-        #             tile.right_status = -1
-        #             tile.down_status = -1
-        #             tile.left_status = -1
-        #             tile.solved = True
         if tile.can_empty == False:
             dirs = tile.get_all_open()
             for i in dirs:
@@ -755,6 +751,44 @@ def solve_empty_tile(board, tile, debug):
             tile.cooldown = 10
         elif debug == False:
             tile.cooldown = tile.cooldown - 1 
+    # if tile.get_number_y() == 1 and debug == False and tile.new_cooldown == 0:
+    #     dirs = tile.get_all_open()
+    #     for i in dirs:
+    #         if i == "Up":
+    #             if board.board[tile.x - 1][tile.y].get_number_n() == 2 and board.board[tile.x - 1][tile.y].get_number_y() == 0:
+    #                 end = get_path_end(board, tile, i, tile.x, tile.y)
+    #                 adj = is_adjacent(end, tile)
+    #                 if not adj == "No":
+    #                     end_dirs = end.get_all_open()
+    #                     if check_if_dirs_empty(board, end, end_dirs):
+    #                         tile.set_to_no(adj)
+    #         if i == "Down":
+    #             if board.board[tile.x + 1][tile.y].get_number_n() == 2 and board.board[tile.x + 1][tile.y].get_number_y() == 0:
+    #                 end = get_path_end(board, tile, i, tile.x, tile.y)
+    #                 adj = is_adjacent(end, tile)
+    #                 if not adj == "No":
+    #                     end_dirs = end.get_all_open()
+    #                     if check_if_dirs_empty(board, end, end_dirs):
+    #                         tile.set_to_no(adj)
+    #         if i == "Right":
+    #             if board.board[tile.x][tile.y + 1].get_number_n() == 2 and board.board[tile.x][tile.y + 1].get_number_y() == 0:
+    #                 end = get_path_end(board, tile, i, tile.x, tile.y)
+    #                 adj = is_adjacent(end, tile)
+    #                 if not adj == "No":
+    #                     end_dirs = end.get_all_open()
+    #                     if check_if_dirs_empty(board, end, end_dirs):
+    #                         tile.set_to_no(adj)
+    #         if i == "Left":
+    #             if board.board[tile.x][tile.y - 1].get_number_n() == 2 and board.board[tile.x][tile.y - 1].get_number_y() == 0:
+    #                 end = get_path_end(board, tile, i, tile.x, tile.y)
+    #                 adj = is_adjacent(end, tile)
+    #                 if not adj == "No":
+    #                     end_dirs = end.get_all_open()
+    #                     if check_if_dirs_empty(board, end, end_dirs):
+    #                         tile.set_to_no(adj)
+    # elif tile.get_number_y() == 1 and debug == False:
+    #     tile.new_cooldown = tile.new_cooldown - 1
+        
 
     
 def not_ian(board, tile, dir):
@@ -1143,6 +1177,7 @@ def solve(board, debug):
             for j in range(len(board.board[i])):
                 if debug == False:
                     if board.board[i][j].solved == False:
+                        board.print()
                         print(board.board[i][j].x, board.board[i][j].y)
                 solve_tile(board, board.board[i][j], debug)
         
