@@ -37,12 +37,12 @@ def draw_units(event=None):
         for j in range(len(board.board[0])):
             if board.board[j][i].up_status == 1:
                 c.create_circle((.5+i)*int(w/dim), j*int(h/dim), 5, fill="dark green", outline="white", width=1, tag='circ')
-                c.create_line([((.5+i)*int(w/dim), (j-.5)*int(h/dim)), ((.5+i)*int(w/dim), (j+.5)*int(h/dim))], fill="dark green")
+                c.create_line([((.5+i)*int(w/dim), (j-.5)*int(h/dim)), ((.5+i)*int(w/dim), (j+.5)*int(h/dim))], width=3, fill="dark green")
             elif board.board[j][i].up_status == -1:
                 c.create_circle((.5+i)*int(w/dim), j*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
             if board.board[j][i].right_status == 1:
                 c.create_circle((1+i)*int(w/dim), (.5+j)*int(h/dim), 5, fill="dark green", outline="white", width=1, tag='circ')
-                c.create_line([((.5+i)*int(w/dim), (j+.5)*int(h/dim)), ((1.5+i)*int(w/dim), (j+.5)*int(h/dim))], fill="dark green")
+                c.create_line([((.5+i)*int(w/dim), (j+.5)*int(h/dim)), ((1.5+i)*int(w/dim), (j+.5)*int(h/dim))], width=3, fill="dark green")
             elif board.board[j][i].right_status == -1:
                 c.create_circle((1+i)*int(w/dim), (.5+j)*int(h/dim), 5, fill="red", outline="black", width=1, tag='circ')
             if board.board[j][i].down_status == 1:
@@ -349,25 +349,44 @@ def get_path_end(board, tile, dir, start_x, start_y):
             else:
                 return get_path_end(board, board.board[tile.x][tile.y - 1], new_dir, start_x, start_y)
 
-def simulate_flood(board, tile):
+def simulate_flood(board, tile, start):
     tile.flooded = True
+    if tile.get_number_y() != 1 or start == True:
+        dirs = tile.get_all_open()
+        for i in dirs:
+            if i == "Up":
+                if board.board[tile.x-1][tile.y].flooded == False:
+                    simulate_flood(board, board.board[tile.x - 1][tile.y], False)
+            elif i == "Down":
+                if board.board[tile.x+1][tile.y].flooded == False:
+                    simulate_flood(board, board.board[tile.x + 1][tile.y], False)
+            elif i == "Right":
+                if board.board[tile.x][tile.y+1].flooded == False:
+                    simulate_flood(board, board.board[tile.x][tile.y + 1], False)
+            elif i == "Left":
+                if board.board[tile.x][tile.y-1].flooded == False:
+                    simulate_flood(board, board.board[tile.x][tile.y - 1], False)
+
+def contained_to_flood(board, tile):
     dirs = tile.get_all_open()
     for i in dirs:
         if i == "Up":
-            if board.board[tile.x-1][tile.y].flooded == False:
-                simulate_flood(board, board.board[tile.x - 1][tile.y])
-        elif i == "Down":
-            if board.board[tile.x+1][tile.y].flooded == False:
-                simulate_flood(board, board.board[tile.x + 1][tile.y])
+            if board.board[tile.x - 1][tile.y].flooded == False:
+                return False
         elif i == "Right":
-            if board.board[tile.x][tile.y+1].flooded == False:
-                simulate_flood(board, board.board[tile.x][tile.y + 1])
+            if board.board[tile.x][tile.y + 1].flooded == False:
+                return False
+        elif i == "Down":
+            if board.board[tile.x + 1][tile.y].flooded == False:
+                return False
         elif i == "Left":
-            if board.board[tile.x][tile.y-1].flooded == False:
-                simulate_flood(board, board.board[tile.x][tile.y - 1])
+            if board.board[tile.x][tile.y - 1].flooded == False:
+                return False
+    return True
 
 
-def is_dead_end(board, tile, end):
+
+def is_dead_end(board, tile, end, count):
     # dirs = tile.get_all_open()
     # for dir in dirs:
     #     if dir == "Up":
@@ -415,13 +434,30 @@ def is_dead_end(board, tile, end):
     #             if not is_dead_end(board, board.board[tile.x][tile.y - 1], acc, end):
     #                 return False
     # return True
-    simulate_flood(board, tile)
+    simulate_flood(board, tile, True)
     count = 0
+    non_count = 0
+    all_ends_contained = True
     for row in board.board:
         for t in row:
             if t.flooded == True and t.get_number_y() == 1:
-                count = count + 1
-    if count % 2 != 0:
+                if contained_to_flood(board, t):
+                    (t_end, t_a) = get_endpoint(board, t, t.get_first_yes(), 0)
+                    if t_end.flooded == False and (t.x != tile.x or t.y != tile.y):
+                        all_ends_contained = False
+                    count = count + 1
+                else:
+                    non_count = non_count + 1
+    for row in board.board:
+        for t in row:
+            t.flooded = False
+    if count + non_count == 2 and board.board[end.x][end.y].flooded == True:
+        return True
+    elif count + non_count == 1:
+        return True
+    elif count % 2 != 0 and non_count == 0:
+        return True
+    elif non_count == 0 and all_ends_contained == True:
         return True
     return False
 
@@ -435,7 +471,7 @@ def is_broken(board):
                 return True
             if board.board[i][j].get_number_y() == 1 and board.board[i][j].get_number_n() < 3:
                 (end, a) = get_endpoint(board, board.board[i][j], board.board[i][j].get_first_yes(), 0)
-                if is_dead_end(board, board.board[i][j], end):
+                if is_dead_end(board, board.board[i][j], end, a):
                     return True
             if board.board[i][j].get_number_y() == 2:
                 try:
@@ -1041,7 +1077,7 @@ def solve_tile(board, tile, debug):
         total = len(board.board) * len(board.board[0])
         if tile.up_status == 1:
             (end, count) = get_endpoint(board, tile, "Up", 0)
-            if count < (total * 0.8):
+            if count < (total * 0.75):
                 if end.x == tile.x:
                     if end.y - tile.y == 1:
                         tile.right_status = -1
@@ -1052,7 +1088,7 @@ def solve_tile(board, tile, debug):
                         tile.down_status = -1
         elif tile.right_status == 1:
             (end, count) = get_endpoint(board, tile, "Right", 0)
-            if count < (total * 0.8):
+            if count < (total * 0.75):
                 if end.y == tile.y:
                     if end.x - tile.x == 1:
                         tile.down_status = -1
@@ -1063,7 +1099,7 @@ def solve_tile(board, tile, debug):
                         tile.left_status = -1
         elif tile.down_status == 1:
             (end, count) = get_endpoint(board, tile, "Down", 0)
-            if count < (total * 0.8):
+            if count < (total * 0.75):
                 if end.x == tile.x:
                     if end.y - tile.y == 1:
                         tile.right_status = -1
@@ -1074,7 +1110,7 @@ def solve_tile(board, tile, debug):
                         tile.up_status = -1
         else:
             (end, count) = get_endpoint(board, tile, "Left", 0)
-            if count < (total * 0.8):
+            if count < (total * 0.75):
                 if end.y == tile.y:
                     if end.x - tile.x == 1:
                         tile.down_status = -1
@@ -1095,35 +1131,43 @@ def solve_tile(board, tile, debug):
 
 def solve(board, debug):
     #Solve all tiles
+    count = 0
     for i in range(len(board.board)):
         for j in range(len(board.board[i])):
-            if debug == False:
-                if board.board[i][j].solved == False:
-                    print(board.board[i][j].x, board.board[i][j].y)
-            solve_tile(board, board.board[i][j], debug)
+            if board.board[i][j].solved == True:
+                count = count + 1
+    if debug == True and count > 380:
+        pass
+    else:
+        for i in range(len(board.board)):
+            for j in range(len(board.board[i])):
+                if debug == False:
+                    if board.board[i][j].solved == False:
+                        print(board.board[i][j].x, board.board[i][j].y)
+                solve_tile(board, board.board[i][j], debug)
         
 
 colors = \
-[['E','W','E','W','E','E','E','E','E','E','E','E','B','E','E','W','E','E','E','B'],\
-['E','E','E','E','E','E','E','E','E','E','E','E','E','E','E','E','E','W','E','E'],\
-['E','W','W','E','B','E','B','W','E','E','E','E','E','E','B','E','E','E','E','E'],\
-['B','E','E','E','E','E','W','E','W','B','E','B','E','E','E','E','E','E','B','E'],\
-['E','E','E','E','E','E','E','E','E','E','B','E','E','E','E','E','E','E','E','E'],\
-['E','E','E','B','E','B','E','W','E','E','E','W','E','W','W','B','E','E','B','W'],\
-['E','E','E','E','W','E','E','E','W','E','E','E','E','E','W','E','E','E','E','E'],\
-['W','B','E','W','E','E','E','E','E','W','E','E','E','B','E','E','W','W','E','E'],\
-['E','E','E','E','W','E','W','E','E','E','W','E','E','E','E','E','E','E','E','E'],\
-['E','W','E','W','E','E','E','B','E','B','E','W','E','E','W','W','E','E','W','E'],\
-['E','E','E','W','E','E','W','E','E','E','E','B','E','W','E','B','B','E','E','W'],\
-['E','E','W','E','E','E','E','W','E','E','E','E','E','E','E','E','E','E','E','E'],\
-['E','W','E','W','E','W','E','E','E','B','E','B','E','E','E','B','E','W','E','E'],\
-['E','E','W','E','E','E','W','E','E','E','E','E','E','E','E','E','E','E','W','E'],\
-['E','W','E','E','E','W','E','E','B','E','E','E','W','W','E','B','E','E','E','E'],\
-['E','W','E','E','E','E','W','E','E','B','E','E','E','W','E','E','E','E','B','W'],\
-['E','W','E','E','E','E','W','W','E','E','B','E','E','W','E','E','E','E','E','E'],\
-['E','E','E','B','E','E','E','E','B','E','E','E','E','E','E','E','E','E','E','E'],\
-['W','E','E','E','B','E','W','E','E','E','E','E','W','E','E','E','E','B','E','W'],\
-['E','W','E','E','E','W','E','E','E','E','E','W','W','E','E','E','E','E','E','E'],\
+[['E','E','E','W','E','E','E','E','E','W','E','E','E','E','E','B','E','E','W','E'],\
+['E','E','E','E','W','W','E','E','W','E','W','E','W','E','B','E','E','E','E','W'],\
+['B','E','E','W','E','E','E','W','E','E','E','E','E','E','E','E','E','W','E','B'],\
+['E','E','W','E','W','E','W','B','W','E','E','B','E','E','W','E','E','E','E','E'],\
+['E','W','E','E','E','E','E','W','E','E','B','W','W','E','E','E','E','E','E','E'],\
+['E','B','E','E','E','W','W','E','E','E','E','W','E','W','B','W','E','E','W','E'],\
+['E','E','E','E','E','E','E','E','E','W','E','E','E','E','E','E','E','B','E','E'],\
+['E','E','W','E','E','B','E','E','E','E','E','E','B','E','W','W','E','E','E','E'],\
+['B','E','E','E','E','E','E','B','E','E','E','E','W','E','E','E','E','W','E','W'],\
+['E','E','E','E','B','E','B','E','B','E','W','E','E','B','E','E','E','E','W','E'],\
+['E','E','E','E','E','E','E','E','W','B','E','E','B','E','W','E','E','E','E','E'],\
+['W','E','W','E','B','W','E','E','E','E','B','E','E','E','B','E','E','E','E','E'],\
+['E','E','E','W','E','E','E','E','W','E','E','E','E','E','E','E','B','E','B','E'],\
+['E','E','E','W','E','B','E','E','E','E','E','E','E','E','B','E','W','E','B','E'],\
+['B','E','E','E','W','E','E','E','E','E','E','E','E','E','E','E','E','E','E','E'],\
+['E','E','E','E','E','E','W','E','E','B','W','W','E','W','E','W','W','E','W','E'],\
+['E','W','E','W','W','B','E','E','E','W','B','E','E','B','E','E','E','W','E','W'],\
+['E','E','E','E','E','E','E','W','W','E','E','E','E','W','E','W','E','B','E','E'],\
+['E','W','B','W','E','W','E','W','E','W','E','E','W','E','E','W','E','E','W','E'],\
+['E','E','E','E','E','B','E','E','E','E','E','E','W','E','E','E','E','E','E','E'],\
 ]
 
 board = Board(colors)
